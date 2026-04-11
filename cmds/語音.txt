@@ -1,0 +1,463 @@
+import time, discord, datetime
+from discord.ext import tasks, commands
+import asyncio
+from gtts import gTTS
+import os
+
+intents = discord.Intents.default()
+intents.voice_states = True
+intents.message_content = True
+
+#class fire5(commands.Cog):
+#    every_min5_time = [
+#        datetime.time(hour = i, minute = 5, tzinfo = datetime.timezone(datetime.timedelta(hours = 8)))
+#        for i in range(24)
+#    ]
+#    tz = datetime.timezone(datetime.timedelta(hours = 8))
+#
+#    def __init__(self, bot: commands.Bot):
+#        self.bot = bot
+#        self.everyday_5.start()
+#    
+#    @tasks.loop(time=every_min5_time)
+#    async def everyday_5(self):
+#        channel_id = 1325347567436828692
+#        channel = self.bot.get_channel(channel_id)
+#        
+#        # Connect to the voice channel
+#        if not channel.guild.voice_client:
+#            await channel.connect()
+#        
+#        voice_client = channel.guild.voice_client
+#        
+#        # Check if voice client is playing or paused
+#        if voice_client.is_playing() or voice_client.is_paused():
+#            return
+#        
+#        text = "胖宸補火"
+#        tts = gTTS(text, lang='zh')
+#        filename = 'tts.mp3'
+#        tts.save(filename)
+#        
+#        # Play the audio
+#        voice_client.play(discord.FFmpegPCMAudio(source=filename), after=lambda e: os.remove(filename))
+#
+#    def cog_unload(self):
+#        self.everyday_5.cancel()
+#
+#class fire10(commands.Cog):
+#    every_min10_time = [
+#        datetime.time(hour = i, minute = 10, tzinfo = datetime.timezone(datetime.timedelta(hours = 8)))
+#        for i in range(24)
+#    ]
+#    tz = datetime.timezone(datetime.timedelta(hours = 8))
+#
+#    def __init__(self, bot: commands.Bot):
+#        self.bot = bot
+#        self.everyday_10.start()
+#    
+#    @tasks.loop(time=every_min10_time)
+#    async def everyday_10(self):
+#        channel_id = 1325347567436828692
+#        channel = self.bot.get_channel(channel_id)
+#        
+#        # Connect to the voice channel
+#        if not channel.guild.voice_client:
+#            await channel.connect()
+#        
+#        voice_client = channel.guild.voice_client
+#        
+#        # Check if voice client is playing or paused
+#        if voice_client.is_playing() or voice_client.is_paused():
+#            return
+#        
+#        text = "胖宸補火"
+#        tts = gTTS(text, lang='zh')
+#        filename = 'tts.mp3'
+#        tts.save(filename)
+#        
+#        # Play the audio
+#        voice_client.play(discord.FFmpegPCMAudio(source=filename), after=lambda e: os.remove(filename))
+#
+#    def cog_unload(self):
+#        self.everyday_10.cancel()
+#        
+#class fire15(commands.Cog):
+#    every_min15_time = [
+#        datetime.time(hour = i, minute = 15, tzinfo = datetime.timezone(datetime.timedelta(hours = 8)))
+#        for i in range(24)
+#    ]
+#    tz = datetime.timezone(datetime.timedelta(hours = 8))
+#
+#    def __init__(self, bot: commands.Bot):
+#        self.bot = bot
+#        self.everyday_15.start()
+#    
+#    @tasks.loop(time=every_min15_time)
+#    async def everyday_15(self):
+#        channel_id = 1325347567436828692
+#        channel = self.bot.get_channel(channel_id)
+#        
+#        # Connect to the voice channel
+#        if not channel.guild.voice_client:
+#            await channel.connect()
+#        
+#        voice_client = channel.guild.voice_client
+#        
+#        # Check if voice client is playing or paused
+#        if voice_client.is_playing() or voice_client.is_paused():
+#            return
+#        
+#        text = "胖宸補火"
+#        tts = gTTS(text, lang='zh')
+#        filename = 'tts.mp3'
+#        tts.save(filename)
+#        
+#        # Play the audio
+#        voice_client.play(discord.FFmpegPCMAudio(source=filename), after=lambda e: os.remove(filename))
+#
+#    def cog_unload(self):
+#        self.everyday_15.cancel()
+#
+#class fire20(commands.Cog):
+#    every_min20_time = [
+#        datetime.time(hour = i, minute = 20, tzinfo = datetime.timezone(datetime.timedelta(hours = 8)))
+#        for i in range(24)
+#    ]
+#    tz = datetime.timezone(datetime.timedelta(hours = 8))
+#
+#    def __init__(self, bot: commands.Bot):
+#        self.bot = bot
+#        self.everyday_20.start()
+#    
+#    @tasks.loop(time=every_min20_time)
+#    async def everyday_20(self):
+#        channel_id = 1325347567436828692
+#        channel = self.bot.get_channel(channel_id)
+#        
+#        # Connect to the voice channel
+#        if not channel.guild.voice_client:
+#            await channel.connect()
+#        
+#        voice_client = channel.guild.voice_client
+#        
+#        # Check if voice client is playing or paused
+#        if voice_client.is_playing() or voice_client.is_paused():
+#            return
+#        
+#        text = "胖宸補火"
+#        tts = gTTS(text, lang='zh')
+#        filename = 'tts.mp3'
+#        tts.save(filename)
+#        
+#        # Play the audio
+#        voice_client.play(discord.FFmpegPCMAudio(source=filename), after=lambda e: os.remove(filename))
+#
+#    def cog_unload(self):
+#        self.everyday_20.cancel()
+#        
+#class fire25(commands.Cog):
+#    every_min25_time = [
+#        datetime.time(hour = i, minute = 25, tzinfo = datetime.timezone(datetime.timedelta(hours = 8)))
+#        for i in range(24)
+#    ]
+#    tz = datetime.timezone(datetime.timedelta(hours = 8))
+#
+#    def __init__(self, bot: commands.Bot):
+#        self.bot = bot
+#        self.everyday_25.start()
+#    
+#    @tasks.loop(time=every_min25_time)
+#    async def everyday_25(self):
+#        channel_id = 1325347567436828692
+#        channel = self.bot.get_channel(channel_id)
+#        
+#        # Connect to the voice channel
+#        if not channel.guild.voice_client:
+#            await channel.connect()
+#        
+#        voice_client = channel.guild.voice_client
+#        
+#        # Check if voice client is playing or paused
+#        if voice_client.is_playing() or voice_client.is_paused():
+#            return
+#        
+#        text = "胖宸補火"
+#        tts = gTTS(text, lang='zh')
+#        filename = 'tts.mp3'
+#        tts.save(filename)
+#        
+#        # Play the audio
+#        voice_client.play(discord.FFmpegPCMAudio(source=filename), after=lambda e: os.remove(filename))
+#
+#    def cog_unload(self):
+#        self.everyday_25.cancel()
+#
+#
+#class fire30(commands.Cog):
+#    every_min30_time = [
+#        datetime.time(hour = i, minute = 30, tzinfo = datetime.timezone(datetime.timedelta(hours = 8)))
+#        for i in range(24)
+#    ]
+#    tz = datetime.timezone(datetime.timedelta(hours = 8))
+#
+#    def __init__(self, bot: commands.Bot):
+#        self.bot = bot
+#        self.everyday_30.start()
+#    
+#    @tasks.loop(time=every_min30_time)
+#    async def everyday_30(self):
+#        channel_id = 1325347567436828692
+#        channel = self.bot.get_channel(channel_id)
+#        
+#        # Connect to the voice channel
+#        if not channel.guild.voice_client:
+#            await channel.connect()
+#        
+#        voice_client = channel.guild.voice_client
+#        
+#        # Check if voice client is playing or paused
+#        if voice_client.is_playing() or voice_client.is_paused():
+#            return
+#        
+#        text = "胖宸補火"
+#        tts = gTTS(text, lang='zh')
+#        filename = 'tts.mp3'
+#        tts.save(filename)
+#        
+#        # Play the audio
+#        voice_client.play(discord.FFmpegPCMAudio(source=filename), after=lambda e: os.remove(filename))
+#
+#    def cog_unload(self):
+#        self.everyday_30.cancel()
+#        
+#class fire35(commands.Cog):
+#    every_min35_time = [
+#        datetime.time(hour = i, minute = 35, tzinfo = datetime.timezone(datetime.timedelta(hours = 8)))
+#        for i in range(24)
+#    ]
+#    tz = datetime.timezone(datetime.timedelta(hours = 8))
+#
+#    def __init__(self, bot: commands.Bot):
+#        self.bot = bot
+#        self.everyday_35.start()
+#    
+#    @tasks.loop(time=every_min35_time)
+#    async def everyday_35(self):
+#        channel_id = 1325347567436828692
+#        channel = self.bot.get_channel(channel_id)
+#        
+#        # Connect to the voice channel
+#        if not channel.guild.voice_client:
+#            await channel.connect()
+#        
+#        voice_client = channel.guild.voice_client
+#        
+#        # Check if voice client is playing or paused
+#        if voice_client.is_playing() or voice_client.is_paused():
+#            return
+#        
+#        text = "胖宸補火"
+#        tts = gTTS(text, lang='zh')
+#        filename = 'tts.mp3'
+#        tts.save(filename)
+#        
+#        # Play the audio
+#        voice_client.play(discord.FFmpegPCMAudio(source=filename), after=lambda e: os.remove(filename))
+#
+#    def cog_unload(self):
+#        self.everyday_35.cancel()
+#
+#class fire40(commands.Cog):
+#    every_min40_time = [
+#        datetime.time(hour = i, minute = 40, tzinfo = datetime.timezone(datetime.timedelta(hours = 8)))
+#        for i in range(24)
+#    ]
+#    tz = datetime.timezone(datetime.timedelta(hours = 8))
+#
+#    def __init__(self, bot: commands.Bot):
+#        self.bot = bot
+#        self.everyday_40.start()
+#    
+#    @tasks.loop(time=every_min40_time)
+#    async def everyday_40(self):
+#        channel_id = 1325347567436828692
+#        channel = self.bot.get_channel(channel_id)
+#        
+#        # Connect to the voice channel
+#        if not channel.guild.voice_client:
+#            await channel.connect()
+#        
+#        voice_client = channel.guild.voice_client
+#        
+#        # Check if voice client is playing or paused
+#        if voice_client.is_playing() or voice_client.is_paused():
+#            return
+#        
+#        text = "胖宸補火"
+#        tts = gTTS(text, lang='zh')
+#        filename = 'tts.mp3'
+#        tts.save(filename)
+#        
+#        # Play the audio
+#        voice_client.play(discord.FFmpegPCMAudio(source=filename), after=lambda e: os.remove(filename))
+#
+#    def cog_unload(self):
+#        self.everyday_40.cancel()
+#        
+#class fire45(commands.Cog):
+#    every_min45_time = [
+#        datetime.time(hour = i, minute = 45, tzinfo = datetime.timezone(datetime.timedelta(hours = 8)))
+#        for i in range(24)
+#    ]
+#    tz = datetime.timezone(datetime.timedelta(hours = 8))
+#
+#    def __init__(self, bot: commands.Bot):
+#        self.bot = bot
+#        self.everyday_45.start()
+#    
+#    @tasks.loop(time=every_min45_time)
+#    async def everyday_45(self):
+#        channel_id = 1325347567436828692
+#        channel = self.bot.get_channel(channel_id)
+#        
+#        # Connect to the voice channel
+#        if not channel.guild.voice_client:
+#            await channel.connect()
+#        
+#        voice_client = channel.guild.voice_client
+#        
+#        # Check if voice client is playing or paused
+#        if voice_client.is_playing() or voice_client.is_paused():
+#            return
+#        
+#        text = "胖宸補火"
+#        tts = gTTS(text, lang='zh')
+#        filename = 'tts.mp3'
+#        tts.save(filename)
+#        
+#        # Play the audio
+#        voice_client.play(discord.FFmpegPCMAudio(source=filename), after=lambda e: os.remove(filename))
+#
+#    def cog_unload(self):
+#        self.everyday_45.cancel()
+#
+#class fire50(commands.Cog):
+#    every_min50_time = [
+#        datetime.time(hour = i, minute = 50, tzinfo = datetime.timezone(datetime.timedelta(hours = 8)))
+#        for i in range(24)
+#    ]
+#    tz = datetime.timezone(datetime.timedelta(hours = 8))
+#
+#    def __init__(self, bot: commands.Bot):
+#        self.bot = bot
+#        self.everyday_50.start()
+#    
+#    @tasks.loop(time=every_min50_time)
+#    async def everyday_50(self):
+#        channel_id = 1325347567436828692
+#        channel = self.bot.get_channel(channel_id)
+#        
+#        # Connect to the voice channel
+#        if not channel.guild.voice_client:
+#            await channel.connect()
+#        
+#        voice_client = channel.guild.voice_client
+#        
+#        # Check if voice client is playing or paused
+#        if voice_client.is_playing() or voice_client.is_paused():
+#            return
+#        
+#        text = "胖宸補火"
+#        tts = gTTS(text, lang='zh')
+#        filename = 'tts.mp3'
+#        tts.save(filename)
+#        
+#        # Play the audio
+#        voice_client.play(discord.FFmpegPCMAudio(source=filename), after=lambda e: os.remove(filename))
+#
+#    def cog_unload(self):
+#        self.everyday_50.cancel()
+#        
+#class fire55(commands.Cog):
+#    every_min55_time = [
+#        datetime.time(hour = i, minute = 55, tzinfo = datetime.timezone(datetime.timedelta(hours = 8)))
+#        for i in range(24)
+#    ]
+#    tz = datetime.timezone(datetime.timedelta(hours = 8))
+#
+#    def __init__(self, bot: commands.Bot):
+#        self.bot = bot
+#        self.everyday_55.start()
+#    
+#    @tasks.loop(time=every_min55_time)
+#    async def everyday_55(self):
+#        channel_id = 1325347567436828692
+#        channel = self.bot.get_channel(channel_id)
+#        
+#        # Connect to the voice channel
+#        if not channel.guild.voice_client:
+#            await channel.connect()
+#        
+#        voice_client = channel.guild.voice_client
+#        
+#        # Check if voice client is playing or paused
+#        if voice_client.is_playing() or voice_client.is_paused():
+#            return
+#        
+#        text = "胖宸補火"
+#        tts = gTTS(text, lang='zh')
+#        filename = 'tts.mp3'
+#        tts.save(filename)
+#        
+#        # Play the audio
+#        voice_client.play(discord.FFmpegPCMAudio(source=filename), after=lambda e: os.remove(filename))
+#
+#    def cog_unload(self):
+#        self.everyday_55.cancel()
+
+every_min0_time = [
+    datetime.time(hour = i, minute = 0, tzinfo = datetime.timezone(datetime.timedelta(hours = 8)))
+    for i in range(24)
+]
+
+class fire0(commands.Cog):
+    tz = datetime.timezone(datetime.timedelta(hours = 8))
+
+    def __init__(self, bot: commands.Bot):
+        self.bot = bot
+        self.everyday_0.start()
+    
+    @tasks.loop(time=every_min0_time)
+    async def everyday_0(self):
+        channel_id = 1353676679800946698
+        channel = self.bot.get_channel(channel_id)
+        
+        # Connect to the voice channel
+        if not channel.guild.voice_client:
+            await channel.connect()
+        
+        voice_client = channel.guild.voice_client
+        
+        # Check if voice client is playing or paused
+        if voice_client.is_playing() or voice_client.is_paused():
+            return
+        
+        text = "記得補火"
+        tts = gTTS(text, lang='zh')
+        filename = 'tts.mp3'
+        tts.save(filename)
+        
+        # Play the audio
+        voice_client.play(discord.FFmpegPCMAudio(source=filename), after=lambda e: os.remove(filename))
+
+    def cog_unload(self):
+        self.everyday_0.cancel()
+
+async def setup(bot: commands.Bot):
+    await bot.add_cog(fire0(bot))
+    #await bot.add_cog(fire10(bot))
+    #await bot.add_cog(fire20(bot))
+    #await bot.add_cog(fire30(bot))
+    #await bot.add_cog(fire40(bot))
+    #await bot.add_cog(fire50(bot))

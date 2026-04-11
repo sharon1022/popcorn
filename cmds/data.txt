@@ -1,0 +1,145 @@
+import os
+import discord
+from discord.ext import commands, tasks
+import requests
+import pygsheets
+from datetime import datetime, timezone, timedelta
+
+REGION = "tw"
+GSHEET_NAME = "Data"  # Google Sheet 名稱
+
+gc = pygsheets.authorize(service_file='/2TB/sharon/心願音符/python.json')
+sh = gc.open_by_url("https://docs.google.com/spreadsheets/d/1TkkpH37kL8Mpf4T-ttm0DcLv-JCoI86tLO_GHRocKss/")
+wks = sh.worksheet_by_title("工作表1")
+
+class DataGet(commands.Cog):
+    def __init__(self, bot):
+        self.bot = bot
+        # 在 cog 初始化時啟動 loop
+        self.fetch_rankings_task.start()
+
+    def get_current_event_id(self):
+        """從 Sekai Viewer TW API 取得當前活動 ID"""
+        try:
+            res = requests.get("https://strapi.sekai.best/sekai-current-event-tw")
+            if res.status_code == 200:
+                data = res.json()
+                # 假設 API 回傳陣列，取第一個活動的 id
+                if isinstance(data, list) and data:
+                    return data[0].get("eventJson", {}).get("id")
+                elif isinstance(data, dict):
+                    return data.get("eventJson", {}).get("id")
+        except Exception as e:
+            print(f"取得當前活動ID失敗: {e}")
+        return None
+    # ------------------------
+    # 取得最近一次排名時間
+    # ------------------------
+    def get_closest_rankings(self, event_id: int, top_n: int = 100):
+        # 取得所有時間點
+        url_times = f"https://api.sekai.best/event/{event_id}/rankings/time"
+        res_times = requests.get(url_times, params={"region": REGION})
+        if res_times.status_code != 200:
+            return None, None
+
+        times = res_times.json().get("data", [])
+        if not times:
+            return None, None
+
+        now = datetime.now(timezone.utc)
+        closest_time = min(
+            times, 
+            key=lambda t: abs(datetime.fromisoformat(t.replace("Z", "+00:00")) - now)
+        )
+
+        # 抓取該時間點的前 top_n 名
+        url_rank = f"https://api.sekai.best/event/{event_id}/rankings"
+        res_rank = requests.get(
+            url_rank, 
+            params={"region": REGION, "timestamp": closest_time, "limit": top_n}
+        )
+        if res_rank.status_code != 200:
+            return None, None
+
+        rankings = res_rank.json().get("data", {}).get("eventRankings", [])
+        return rankings[:top_n], closest_time
+
+    # ------------------------
+    # 寫入 Google Sheet
+    # ------------------------
+    def append_rankings_to_sheet(self, rankings, update_timestamp: str | None = None):
+        if wks is None or not rankings:
+            return
+
+        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+        # 先算好 next_diff
+        rankings = sorted(rankings, key=lambda x: x.get("rank") or x.get("ranking") or 10**9)
+        for i, p in enumerate(rankings):
+            if i + 1 < len(rankings):
+                p["next_diff"] = (p.get("score") or 0) - (rankings[i + 1].get("score") or 0)
+            else:
+                p["next_diff"] = 0
+
+        # 檢查是否需要表頭
+        values_now = wks.get_all_values(include_tailing_empty=False)
+        if not values_now:
+            wks.update_values("A1", [["抓取時間", "Rank", "UserID", "UserName", "Score", "NextDiff", "來源時間(UTC+8)"]])
+            last_row = 1
+        else:
+            last_row = len(values_now)
+
+        # 格式化時間
+        last_update_str = ""
+        ts = update_timestamp
+        if ts:
+            try:
+                last_update_utc = datetime.fromisoformat(ts.replace("Z", "+00:00")).astimezone(
+                    timezone(timedelta(hours=8))
+                )
+                last_update_str = last_update_utc.strftime("%Y/%m/%d %H:%M:%S")
+            except Exception:
+                last_update_str = ts
+
+        # 準備資料
+        all_rows = []
+        for r in rankings:
+            rank = r.get("rank") or r.get("ranking")
+            user_id = r.get("userId") or r.get("user_id")
+            user_name = r.get("userName") or r.get("user_name") or r.get("player_name")
+            score = r.get("score")
+            next_diff = r.get("next_diff", 0)
+
+            all_rows.append([now, rank, user_id, user_name, score, next_diff, last_update_str])
+
+        # 直接接在最後一行後面
+        # 取得目前最後一行（包含表頭）
+        wks.append_table(all_rows)
+
+
+
+    # ------------------------
+    # 背景任務，每三分鐘抓取一次
+    # ------------------------
+    @tasks.loop(seconds=180)
+    async def fetch_rankings_task(self):
+        try:
+            event_id = self.get_current_event_id()
+            if not event_id:
+                event_id = 141  # 每期活動 ID 預設值（請依實際情況調整）
+
+            # 直接抓最近的時間點與排名，回傳 (rankings, timestamp)
+            rankings, timestamp = self.get_closest_rankings(event_id, top_n=100)
+            if rankings:
+                self.append_rankings_to_sheet(rankings, update_timestamp=timestamp)
+            else:
+                print("沒有抓到排名資料")
+        except Exception as e:
+            None
+    
+    def cog_unload(self):
+        self.fetch_rankings_task.cancel()
+
+
+async def setup(bot):
+    await bot.add_cog(DataGet(bot))
