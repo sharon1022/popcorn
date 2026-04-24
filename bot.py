@@ -17,7 +17,7 @@ bot = commands.Bot(command_prefix = "&", intents = intents)
 
 @bot.event
 async def on_ready():
-    activity = discord.Activity(type=discord.ActivityType.watching, name="&h 指令表(最近更新時間:2026/4/4)")
+    activity = discord.Activity(type=discord.ActivityType.watching, name="&h 指令表(最近更新時間:2026/4/24)")
     await bot.change_presence(status=discord.Status.online, activity=activity)
     print(f"目前登入身份 --> {bot.user}")
 

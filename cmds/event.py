@@ -24,8 +24,11 @@ class PJSKEvent(commands.Cog):
 
             async with ctx.typing():
                 event_id = data["id"]
+                close_time = data["aggregate_at"]
+                close_time_utc8 = parser.isoparse(close_time).astimezone(timezone(timedelta(hours=8))).strftime('%Y-%m-%d %H:%M:%S')
+                event_name = data["name"]
             
-            players = data["top_100_player_rankings"]
+            players = data["player_top_100_rankings"]
 
             # 支持範圍查詢 (例如 5-10)
             if "-" in rank_num_str:
@@ -48,6 +51,7 @@ class PJSKEvent(commands.Cog):
 
             # 建立單一 Embed，包含所有名次
             embed = discord.Embed(
+                title=f"{event_name}",
                 color=discord.Color.from_rgb(int(0.945 * 255), int(0.906 * 255), int(0.486 * 255)),
             )
 
@@ -84,7 +88,7 @@ class PJSKEvent(commands.Cog):
                 embed.add_field(name=name, value=field_value, inline=False)
 
             embed.add_field(name="資料來源", value="[Hi Sekai](https://docs.hisekai.org/zh/docs)", inline=False)
-            embed.set_footer(text=f"活動期數：{event_id}")
+            embed.set_footer(text=f"活動期數：{event_id}\n結束時間：{close_time_utc8} (UTC+8)")
             await ctx.send(embed=embed)
 
         except Exception as e:

@@ -104,10 +104,10 @@ class React(commands.Cog):
     @commands.Cog.listener()
     async def on_message(self, message): #更改房號
         try:
-            channel = self.bot.get_channel(1481343298751828153) #霜車頻
+            channel = self.bot.get_channel(1424899372210065428) #綾車頻
             if message.author == self.bot.user:
                 return
-            if message.channel.id in [1481343298751828153,1481344188686663914]:
+            if message.channel.id in [1424899372210065428,1424899372210065428]:
                 if message.content.isdigit():
                     if len(message.content) == 5:
                         await channel.edit(name=f"{message.content}")
