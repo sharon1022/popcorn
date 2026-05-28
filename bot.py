@@ -17,7 +17,7 @@ bot = commands.Bot(command_prefix = "&", intents = intents)
 
 @bot.event
 async def on_ready():
-    activity = discord.Activity(type=discord.ActivityType.watching, name="&h 指令表(最近更新時間:2026/4/24)")
+    activity = discord.Activity(type=discord.ActivityType.watching, name="&h 指令表(最近更新時間:2026/5/28)")
     await bot.change_presence(status=discord.Status.online, activity=activity)
     print(f"目前登入身份 --> {bot.user}")
 
@@ -37,21 +37,24 @@ async def on_member_remove(member: discord.Member):
 @bot.command()
 async def load(ctx, extension):
     try:
-        await bot.load_extension(f"cmds.{extension}")
-        await ctx.send(f"Loaded {extension} done.")
+        if ctx.author.id == int(os.getenv("SNAPI_ID")):
+            await bot.load_extension(f"cmds.{extension}")
+            await ctx.send(f"Loaded {extension} done.")
     except Exception as e:
             await ctx.send(e) 
 
 @bot.command()
 async def unload(ctx, extension):
-    await bot.unload_extension(f"cmds.{extension}")
-    await ctx.send(f"UnLoaded {extension} done.")
+    if ctx.author.id == int(os.getenv("SNAPI_ID")):
+        await bot.unload_extension(f"cmds.{extension}")
+        await ctx.send(f"UnLoaded {extension} done.")
 
 @bot.command()
 async def reload(ctx, extension):
     try:
-        await bot.reload_extension(f"cmds.{extension}")
-        await ctx.send(f"ReLoaded {extension} done.")
+        if ctx.author.id == int(os.getenv("SNAPI_ID")):
+            await bot.reload_extension(f"cmds.{extension}")
+            await ctx.send(f"ReLoaded {extension} done.")
     except Exception as e:
             await ctx.send(e) 
 async def main():
