@@ -18,9 +18,9 @@ import re
 
 gc = pygsheets.authorize(service_file='/2TB/sharon/心願音符/python.json')
 
-car_server_id = 1294722384200470608 #綾私車
+car_server_id = 1035248122814799992 #ace私車
 my_server_id = 1018898779635720293
-sht1 = gc.open_by_url('https://docs.google.com/spreadsheets/d/11uufAdHMflEFhvAT7O6zScVqA2aEAcilTMqRaCvMCVQ/') #目前是leon班表，開活記得換
+sht1 = gc.open_by_url('https://docs.google.com/spreadsheets/d/14wnMQQo7arrH3AU0n8HcxHvCJMx4B_OFDKa9ovFcmOg/') #目前是ace班表，開活記得換
 wks = sht1.worksheet_by_title('班表名稱')
 
 def set_chinese_font():
@@ -38,6 +38,17 @@ def set_chinese_font():
             return FontProperties(fname=path)
     # 若都找不到，回傳系統預設
     return FontProperties()
+
+def parse_discord_id(value):
+    if value is None:
+        return None
+    raw = str(value).strip()
+    match = re.match(r'^<@!?(\d+)>$', raw)
+    if match:
+        return int(match.group(1))
+    if raw.isdigit():
+        return int(raw)
+    return None
 
 def get_bg_colors(sheet, start, end):
     cells = sheet.range(start + ":" + end, returnas='cells')
@@ -151,6 +162,8 @@ class Register(commands.Cog):
                     await ctx.reply('已登記過資料，請勿重複登記')
                 else:        
                     values = [f'{name}', f'<@{user_id}>', f'{sk}']
+                    role = ctx.guild.get_role(1517052743506727014)
+                    await ctx.author.add_roles(role)
                     await ctx.message.add_reaction('<a:emoji_40:1305829128955760680>')
                     wks.append_table([values])
         except Exception as e:
@@ -191,7 +204,7 @@ class Register(commands.Cog):
             pattern = re.compile(r'^(1[0-2]|0?[1-9])/(3[01]|[12][0-9]|0?[1-9])\s(2[0-4]|1[0-9]|0?[0-9])-(2[0-4]|1[0-9]|0?[0-9])$')
             if message.author == self.bot.user:
                 return
-            if message.channel.id == 1452987608115187763: #leon
+            if message.channel.id == 1517035671506915328: #ace砍班頻道
                 if message.content.startswith('-'): #砍班
                     text = message.content[1:]
                     if not pattern.match(text.strip()):
@@ -239,7 +252,7 @@ class Register(commands.Cog):
                                 name.value = ''
                     await message.add_reaction('<:emoji_28:1308760446102142997>')
 
-            if message.channel.id == 1452987608115187763: #leon報班頻道
+            if message.channel.id == 1517034854632394912: #ace報班頻道
                 if pattern.match(message.content.strip()): #報班
                     user_id = message.author.id
                     id_cell = wks.find(f'{user_id}')
@@ -276,7 +289,6 @@ class Register(commands.Cog):
                         k_time1 = time1_int + 2
                         k_time2 = time2_int + 1
 
-                        value = [f'{name}']
                         date_sht = sht1.worksheet_by_title(f'{date}')
 
                         # 取得 A 欄的時間範圍
@@ -287,9 +299,9 @@ class Register(commands.Cog):
                         duplicate_times = []
 
                         for row_offset, time_str in enumerate(time_values):  # row_offset: 0-based
-                            row = k_time1 + row_offset  # 真正的 row index
+                            row2 = k_time1 + row_offset  # 真正的 row index
                             # 取得 B~Z 欄該列的所有值
-                            row_values = date_sht.get_values(f'B{row}', f'Z{row}')
+                            row_values = date_sht.get_values(f'B{row2}', f'Z{row2}')
                             row_values = row_values[0] if row_values else []
 
                             if name in row_values:
@@ -300,92 +312,126 @@ class Register(commands.Cog):
                             duplicate_text = '、'.join(duplicate_times)
                             await message.reply(f'以下時段重複報班：\n**__{duplicate_text}__**\n請調整報班時段<a:emoji_25:1305806356858798090>')
                         else:
-                            # 沒重複，填寫資料
+                            # ==================== 沒重複，開始填寫資料（修改此處） ====================
+                            # 1. 取得來源儲存格物件（例如名字那一格）
+                            source_cell_obj = wks.cell(f'A{row}') 
+                            
+                            # 2. 使用 pygsheets 正確的 GridRange 建立方式（傳入 wks 物件與行列範圍）
+                            # 注意：使用 start/end 參數時，pygsheets 的範圍是包含 start、不包含 end (1-based)
+                            # 只要source_cell_obj那格填入target_cell_obj那格就好
+                            src_grid = pygsheets.GridRange(
+                                worksheet=wks,
+                                start=(row, 1),  # A列
+                                end=(row, 1)  # B列
+                            )
                             for col in range(ord('B'), ord('Z') + 1):
-                                col_range = f'{chr(col)}{k_time1}:{chr(col)}{k_time2}'
+                                # 取得該直欄目標範圍的所有值（檢查是否為空）
                                 values = date_sht.get_values(f'{chr(col)}{k_time1}', f'{chr(col)}{k_time2}')
-                                if values == [['']]:
-                                    date_sht.update_values(col_range, [value] * (time2_int - time1_int))
+                                
+                                # 檢查整個時段區間是否都是空的
+                                if all(row_val == [''] for row_val in values):
+                                    
+                                    # 3. 建立目標範圍的 GridRange（同樣傳入 date_sht 物件）
+                                    # k_time2 + 1 是因為 end 座標不包含
+                                    tgt_grid = pygsheets.GridRange(
+                                        worksheet=date_sht,
+                                        start=(k_time1, col - ord('A') + 1),
+                                        end=(k_time2, col - ord('A') + 1)
+                                    )
+                                    
+                                    # 4. 組裝 API 請求（這裡需要轉成 API 認得的 json 格式）
+                                    request = {
+                                        "copyPaste": {
+                                            "source": src_grid.to_json(),
+                                            "destination": tgt_grid.to_json(),
+                                            "pasteType": "PASTE_NORMAL",  # 完全複製：值與格式
+                                            "pasteOrientation": "NORMAL"
+                                        }
+                                    }
+                                    
+                                    # 5. 透過主大主管 sht1 發送請求
+                                    sht1.custom_request(request, fields='replies')
+                                    
                                     await message.add_reaction('<:emoji_28:1308760446102142997>')
                                     return
-
+                            # =====================================================================
                     else:
                         await message.reply('尚未登記資料，麻煩請先登記再使用此指令')
-            if message.channel.id == 1496697512671711373:
-                if pattern.match(message.content.strip()): #S6報班
-                    user_id = message.author.id
-                    id_cell = wks.find(f'{user_id}')
-                    if id_cell:
-                        rows = [cell.row for cell in id_cell]
-                        row = rows[0]
-                        name = wks.cell(f'A{row}').value
-                        parts1 = message.content.split(' ')
-                        date = parts1[0]
-
-                        # 將輸入的日期字串轉換為 date 物件進行比較
-                        try:
-                            month, day = map(int, date.split('/'))
-                            input_date = datetime(year=now.year, month=month, day=day).date()
-                        except ValueError:
-                            await message.reply("日期格式錯誤")
-                            return
-
-                        # 禁止今天
-                        if input_date == today:
-                            await message.reply("今日班表已發布，不可報班")
-                            return
-
-                        # 禁止明天8點前的班
-                        if input_date == tomorrow:
-                            parts2 = parts1[1].split('-')
-                            if int(parts2[0]) <= 8 and int(parts2[1]) <= 8:
-                                await message.reply("今日8-32班表已發布，不可報8點前的班")
-                                return
-
-                        parts2 = parts1[1].split('-')
-                        time2_int = int(parts2[1])
-                        time1_int = int(parts2[0])
-                        k_time1 = time1_int + 2
-                        k_time2 = time2_int + 1
-
-                        value = [f'{name}']
-                        date_sht = sht1.worksheet_by_title(f'{date}')
-
-                        # 取得 A 欄的時間範圍
-                        time_values = date_sht.get_values(f'A{k_time1}', f'A{k_time2}')
-                        time_values = [t[0] for t in time_values]  # 取出時間字串
-
-                        # 紀錄重複時間
-                        duplicate_times = []
-
-                        for row_offset, time_str in enumerate(time_values):  # row_offset: 0-based
-                            row = k_time1 + row_offset  # 真正的 row index
-                            # 取得 B~Z 欄該列的所有值
-                            row_values = date_sht.get_values(f'B{row}', f'Z{row}')
-                            row_values = row_values[0] if row_values else []
-
-                            if name in row_values:
-                                duplicate_times.append(time_str)
-
-                        if duplicate_times:
-                            # 提醒使用者重複
-                            duplicate_text = '、'.join(duplicate_times)
-                            await message.reply(f'以下時段重複報班：\n**__{duplicate_text}__**\n請調整報班時段<a:emoji_25:1305806356858798090>')
-                        else:
-                            # 沒重複，填寫資料
-                            for col in range(ord('B'), ord('Z') + 1):
-                                col_range = f'{chr(col)}{k_time1}:{chr(col)}{k_time2}'
-                                values = date_sht.get_values(f'{chr(col)}{k_time1}', f'{chr(col)}{k_time2}')
-                                if values == [['']]:
-                                    date_sht.update_values(col_range, [value] * (time2_int - time1_int))
-                                    for row in (date_sht.range(f'{chr(col)}{k_time1}:{chr(col)}{k_time2}')):
-                                        for cell in row:
-                                            cell.color = (0.945, 0.906, 0.486)  # 淡黃色
-                                    await message.add_reaction('<:emoji_28:1308760446102142997>')
-                                    return
-
-                    else:
-                        await message.reply('尚未登記資料，麻煩請先登記再使用此指令')
+#            if message.channel.id == 1513189401570709514: #白報班S6頻道
+#                if pattern.match(message.content.strip()): #S6報班
+#                    user_id = message.author.id
+#                    id_cell = wks.find(f'{user_id}')
+#                    if id_cell:
+#                        rows = [cell.row for cell in id_cell]
+#                        row = rows[0]
+#                        name = wks.cell(f'A{row}').value
+#                        parts1 = message.content.split(' ')
+#                        date = parts1[0]
+##
+#                        # 將輸入的日期字串轉換為 date 物件進行比較
+#                        try:
+#                            month, day = map(int, date.split('/'))
+#                            input_date = datetime(year=now.year, month=month, day=day).date()
+#                        except ValueError:
+#                            await message.reply("日期格式錯誤")
+#                            return
+##
+#                        # 禁止今天
+#                        if input_date == today:
+#                            await message.reply("今日班表已發布，不可報班")
+#                            return
+##
+#                        # 禁止明天8點前的班
+#                        if input_date == tomorrow:
+#                            parts2 = parts1[1].split('-')
+#                            if int(parts2[0]) <= 8 and int(parts2[1]) <= 8:
+#                                await message.reply("今日8-32班表已發布，不可報8點前的班")
+#                                return
+##
+#                        parts2 = parts1[1].split('-')
+#                        time2_int = int(parts2[1])
+#                        time1_int = int(parts2[0])
+#                        k_time1 = time1_int + 2
+#                        k_time2 = time2_int + 1
+##
+#                        value = [f'{name}']
+#                        date_sht = sht1.worksheet_by_title(f'{date}')
+##
+#                        # 取得 A 欄的時間範圍
+#                        time_values = date_sht.get_values(f'A{k_time1}', f'A{k_time2}')
+#                        time_values = [t[0] for t in time_values]  # 取出時間字串
+##
+#                        # 紀錄重複時間
+#                        duplicate_times = []
+##
+#                        for row_offset, time_str in enumerate(time_values):  # row_offset: 0-based
+#                            row = k_time1 + row_offset  # 真正的 row index
+#                            # 取得 B~Z 欄該列的所有值
+#                            row_values = date_sht.get_values(f'B{row}', f'Z{row}')
+#                            row_values = row_values[0] if row_values else []
+##
+#                            if name in row_values:
+#                                duplicate_times.append(time_str)
+##
+#                        if duplicate_times:
+#                            # 提醒使用者重複
+#                            duplicate_text = '、'.join(duplicate_times)
+#                            await message.reply(f'以下時段重複報班：\n**__{duplicate_text}__**\n請調整報班時段<a:emoji_25:1305806356858798090>')
+#                        else:
+#                            # 沒重複，填寫資料
+#                            for col in range(ord('B'), ord('Z') + 1):
+#                                col_range = f'{chr(col)}{k_time1}:{chr(col)}{k_time2}'
+#                                values = date_sht.get_values(f'{chr(col)}{k_time1}', f'{chr(col)}{k_time2}')
+#                                if values == [['']]:
+#                                    date_sht.update_values(col_range, [value] * (time2_int - time1_int))
+#                                    for row in (date_sht.range(f'{chr(col)}{k_time1}:{chr(col)}{k_time2}')):
+#                                        for cell in row:
+#                                            cell.color = (0.945, 0.906, 0.486)  # 淡黃色
+#                                    await message.add_reaction('<:emoji_28:1308760446102142997>')
+#                                    return
+##
+#                    else:
+#                        await message.reply('尚未登記資料，麻煩請先登記再使用此指令')
         except Exception as e:
             print(e)
             await message.reply(f'可能輸入有誤，請再輸入一次\n若確認輸入沒錯誤，請@鯛魚')
@@ -521,6 +567,56 @@ class Register(commands.Cog):
             await ctx.reply(f'{e}')
 
     @commands.command()
+    async def role(self, ctx, date, date2, role_name):
+        try:
+            if ctx.guild.id in [car_server_id, my_server_id]:
+                date_sht = sht1.worksheet_by_title(f'{date}')
+                date_sht2 = sht1.worksheet_by_title(f'{date2}')
+                role = discord.utils.get(ctx.guild.roles, name=role_name)
+                if not role:
+                    await ctx.reply(f"找不到 {role_name} 身分組")
+                    return
+
+                # 取得所有報班者的名稱
+                members = []
+                for col in range(ord('C'), ord('F') + 1):
+                    col_values = date_sht.get_values(f'{chr(col)}10', f'{chr(col)}25')
+                    col_values2 = date_sht2.get_values(f'{chr(col)}2', f'{chr(col)}9')
+                    for row in col_values:
+                        if row and row[0].strip():
+                            if row[0].strip() not in members:
+                                members.append(row[0].strip())
+                    for row in col_values2:
+                        if row and row[0].strip():
+                            if row[0].strip() not in members:
+                                members.append(row[0].strip())
+
+
+                # 取得所有報班者的 Discord ID
+                discord_ids = []
+                for member in members:
+                    df = pd.DataFrame(wks.get_all_records())
+                    if df.empty or '名稱' not in df.columns:
+                        continue
+                    target = str(member).strip()
+                    row = df[df['名稱'].astype(str).str.strip() == target]
+                    if not row.empty:
+                        discord_id = parse_discord_id(row.iloc[0]['discord ID'])
+                        if discord_id is not None:
+                            discord_ids.append(discord_id)
+
+                # 為每個報班者添加角色
+                for discord_id in discord_ids:
+                    member = ctx.guild.get_member(discord_id)
+                    if member:
+                        await member.add_roles(role)
+
+                await ctx.send(f"已為幫手添加當日班表身分組 {role_name}")
+        except Exception as e:
+            print(e)
+            await ctx.reply(f'可能輸入有誤，請再輸入一次\n若確認輸入沒錯誤，請@鯛魚')
+
+    @commands.command()
     async def che(self,ctx):
         try:
             if ctx.guild.id in [car_server_id,my_server_id]:
@@ -579,7 +675,7 @@ class Register(commands.Cog):
 
     @tasks.loop(time=every_hour_time)
     async def reminder(self): #提醒上車
-        channel_id_1 = 1424899429659312160  #leon家的上車提醒頻道
+        channel_id_1 = 1517034332571570266  #ace家的上車提醒頻道
         channel_1 = self.bot.get_channel(channel_id_1)
         
         try:
