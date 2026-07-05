@@ -62,58 +62,77 @@ class React(commands.Cog):
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, data):
-        if data.message_id == 1440326957618299031:  # 金魚私車
-            if str(data.emoji) == '<a:emoji_40:1305829128955760680>':
-                guild = self.bot.get_guild(1164979913548382210)
+        if data.message_id == 1511601866125869147:  # 白白私車
+            if str(data.emoji) == '<:a_knd8:1415677403031666772>':
+                guild = self.bot.get_guild(1415296946381525024)
                 user = guild.get_member(data.user_id)
-                role = guild.get_role(1439770810926497893)
+                role = guild.get_role(1415671940445896704)
                 await user.add_roles(role)
-        elif data.message_id == 1349386596922687518:  # 阿堇私車
-            if str(data.emoji) == '<:L1_thx:1202707292840001626>':
-                guild = self.bot.get_guild(1201110858957332480)
+        elif data.message_id == 1511601906877988916:  # 白白私車
+            if str(data.emoji) == '<:a_knd3:1415678754545729627>':
+                guild = self.bot.get_guild(1415296946381525024)
                 user = guild.get_member(data.user_id)
-                role = guild.get_role(1349247663148765184)
+                role = guild.get_role(1415685784442503272)
                 if guild and user and role:
                     await user.add_roles(role)
-            elif str(data.emoji) == '<:chihuahua_sleep:1202723352003743857>':
-                guild = self.bot.get_guild(1201110858957332480)
+        elif data.message_id == 1511601994786406441:  # 白白私車
+            if str(data.emoji) == '<:a_c_knd:1415714696836943894>':
+                guild = self.bot.get_guild(1415296946381525024)
                 user = guild.get_member(data.user_id)
-                role1 = guild.get_role(1349247908511219742)
-                await user.add_roles(role1)
+                role = guild.get_role(1415694516257820732)
+                if guild and user and role:
+                    await user.add_roles(role)
+        elif data.message_id == 1511602095852355594:  # 白白私車
+            if str(data.emoji) == '<:b_v_Rin_peek:1415679761392472074>':
+                guild = self.bot.get_guild(1415296946381525024)
+                user = guild.get_member(data.user_id)
+                role = guild.get_role(1415695030399664259)
+                if guild and user and role:
+                    await user.add_roles(role)
 
     @commands.Cog.listener()
     async def on_raw_reaction_remove(self, data):
-        if data.message_id == 1440326957618299031:  # 金魚私車
-            if str(data.emoji) == '<a:emoji_40:1305829128955760680>':
-                guild = self.bot.get_guild(1164979913548382210)
+        if data.message_id == 1511601866125869147:  # 白白私車
+            if str(data.emoji) == '<:a_knd8:1415677403031666772>':
+                guild = self.bot.get_guild(1415296946381525024)
                 user = guild.get_member(data.user_id)
-                role = guild.get_role(1439770810926497893)
+                role = guild.get_role(1415671940445896704)
                 await user.remove_roles(role)
-        elif data.message_id == 1349386596922687518:  # 阿堇私車
-            if str(data.emoji) == '<:L1_thx:1202707292840001626>':
-                guild = self.bot.get_guild(1201110858957332480)
+        elif data.message_id == 1511601906877988916:  # 白白私車
+            if str(data.emoji) == '<:a_knd3:1415678754545729627>':
+                guild = self.bot.get_guild(1415296946381525024)
                 user = guild.get_member(data.user_id)
-                role = guild.get_role(1349247663148765184)
-                await user.remove_roles(role)
-            elif str(data.emoji) == '<:chihuahua_sleep:1202723352003743857>':
-                guild = self.bot.get_guild(1201110858957332480)
+                role = guild.get_role(1415685784442503272)
+                if guild and user and role:
+                    await user.remove_roles(role)
+        elif data.message_id == 1511601994786406441:  # 白白私車
+            if str(data.emoji) == '<:a_c_knd:1415714696836943894>':
+                guild = self.bot.get_guild(1415296946381525024)
                 user = guild.get_member(data.user_id)
-                role1 = guild.get_role(1349247908511219742)
-                await user.remove_roles(role1)
+                role = guild.get_role(1415694516257820732)
+                if guild and user and role:
+                    await user.remove_roles(role)
+        elif data.message_id == 1511602095852355594:  # 白白私車
+            if str(data.emoji) == '<:b_v_Rin_peek:1415679761392472074>':
+                guild = self.bot.get_guild(1415296946381525024)
+                user = guild.get_member(data.user_id)
+                role = guild.get_role(1415695030399664259)
+                if guild and user and role:
+                    await user.remove_roles(role)
 
     @commands.Cog.listener()
     async def on_message(self, message): #更改房號
         try:
-            channel = self.bot.get_channel(1424899372210065428) #綾車頻
+            channel = self.bot.get_channel(1517034297025101925) #ace車頻
             if message.author == self.bot.user:
                 return
-            if message.channel.id in [1424899372210065428,1424899372210065428]:
+            if message.channel.id in [1517034297025101925,1517034264619651092]:
                 if message.content.isdigit():
                     if len(message.content) == 5:
                         await channel.edit(name=f"{message.content}")
                         await channel.send(f'已將頻道名改為[{message.content}]\n(十分鐘內機器人只可改2次名)')
                     elif message.content == '0':
-                        await channel.edit(name='房號')
+                        await channel.edit(name='車牌')
                         await channel.send('已將頻道名改回')
         except Exception as e:
             print(e)
