@@ -24,7 +24,7 @@ class HelpMenuView(discord.ui.View):
         # 把要顯示的所有內容包在一個清單裡
         my_fields = [
             ("遊戲相關", ">>> **&sk [隊長] [成員] [成員] [成員] [成員]\n&倍率 [隊長] [成員] [成員] [成員] [成員]**\n。幫你算倍率"),
-            ("查榜相關", ">>> **&rank [名次]-[名次]**\n。查詢排名資訊(可輸入單一名次)"),
+            ("查榜相關", ">>> **&rank [名次]-[名次]**\n。查詢排名資訊(可輸入單一名次)\n**&rh [名次]**\n。查詢此排名近十次pt增加量（僅可在活動期間內查詢）\n**&rct**\n。更新結活時間"),
             ("語音房相關", ">>> **&join**\n。讓爆米花加入語音房\n*註：請先加入語音頻道後再使用此指令\n**&leave**\n。讓爆米花退出語音房\n**\\*[內文]**\n。讓爆米花說你想說的話\n**&stop**\n。讓爆米花停止說話")
         ]
         
@@ -55,7 +55,7 @@ class React(commands.Cog):
             color=discord.Color.from_str("#ff9911")
         )
         embed.add_field(name="遊戲相關", value=">>> **&sk [隊長] [成員] [成員] [成員] [成員]\n&倍率 [隊長] [成員] [成員] [成員] [成員]**\n。幫你算倍率", inline=False)
-        embed.add_field(name="查榜相關", value=">>> **&rank [名次]-[名次]**\n。查詢排名資訊(可輸入單一名次)", inline=False)
+        embed.add_field(name="查榜相關", value=">>> **&rank [名次]-[名次]**\n。查詢排名資訊(可輸入單一名次)\n**&rh [名次]**\n。查詢此排名近十次pt增加量（僅可在活動期間內查詢）\n**&rct**\n。更新結活時間", inline=False)
         embed.add_field(name="語音房相關", value=">>> **&join**\n。讓爆米花加入語音房\n*註：請先加入語音頻道後再使用此指令\n**&leave**\n。讓爆米花退出語音房\n**\\*[內文]**\n。讓爆米花說你想說的話\n**&stop**\n。讓爆米花停止說話", inline=False)
         # 初始化 View 並發送
         await ctx.send(embed=embed, view=HelpMenuView())
