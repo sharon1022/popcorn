@@ -125,8 +125,6 @@ class PJSKEvent(commands.Cog):
 
             history_snapshot = {}
             players = data.get("player_top_100_rankings", [])
-            
-            ts = datetime.now(timezone(timedelta(hours=8))).strftime('%Y-%m-%d %H:%M:%S')
 
             for p in players:
                 try:
@@ -134,6 +132,15 @@ class PJSKEvent(commands.Cog):
                     score = p.get("score")
                 except Exception:
                     continue
+
+                last_played_at = p.get("last_played_at")
+                if last_played_at:
+                    try:
+                        ts = parser.isoparse(last_played_at).astimezone(timezone(timedelta(hours=8))).strftime('%Y-%m-%d %H:%M:%S')
+                    except Exception:
+                        ts = datetime.now(timezone(timedelta(hours=8))).strftime('%Y-%m-%d %H:%M:%S')
+                else:
+                    ts = datetime.now(timezone(timedelta(hours=8))).strftime('%Y-%m-%d %H:%M:%S')
 
                 if rank not in self.rank_history:
                     self.rank_history[rank] = deque(maxlen=11)
@@ -184,15 +191,26 @@ class PJSKEvent(commands.Cog):
 
                 event_id = data["id"]
                 close_time = data["aggregate_at"]
+                close_time_dt = parser.isoparse(close_time)
                 close_time_utc8 = parser.isoparse(close_time).astimezone(timezone(timedelta(hours=8))).strftime('%Y-%m-%d %H:%M:%S')
                 event_name = data["name"]
             
-            if close_time_utc8 != self.current_event_close_time:
+            if self.current_event_close_time is None or close_time_dt != self.current_event_close_time:
                 try:
-                    self.current_event_close_time = parser.isoparse(close_time_utc8)
-                    self._load_saved_close_time()
+                    # 將結束時間寫入 event_rank_history.json
+                    history_path = os.path.join(BOT_DIR, "event_rank_history.json")
+                    if os.path.exists(history_path):
+                        with open(history_path, "r", encoding="utf-8") as hf:
+                            j = json.load(hf)
+                    else:
+                        j = {}
+                    j["close_time"] = close_time_utc8
+                    with open(history_path, "w", encoding="utf-8") as hf:
+                        json.dump(j, hf, ensure_ascii=False, indent=2)
+                    self.current_event_close_time = close_time_dt
+                    self.rank_history.clear()
                 except Exception:
-                    self.current_event_close_time = None
+                    pass
             players = data["player_top_100_rankings"]
 
             if "-" in rank_num_str:
@@ -258,7 +276,7 @@ class PJSKEvent(commands.Cog):
         try:
             rank_num_int = int(rank_num)
             if rank_num_int not in self.rank_history or not self.rank_history[rank_num_int]:
-                await ctx.send(f"找不到名次 {rank_num_int} 的歷史紀錄")
+                await ctx.send(f"暫時找不到該名次 {rank_num_int} 的紀錄，請稍後再試或使用&rank指令更新資料")
                 return
 
             # 取得該名次的最新資料以顯示名稱
@@ -283,6 +301,10 @@ class PJSKEvent(commands.Cog):
             except Exception:
                 pass
             players = data.get("player_top_100_rankings", [])
+            score = next((p["score"] for p in players if p["rank"] == rank_num_int), None)
+            if score is None:
+                await ctx.send(f"找不到名次 {rank_num_int} 的資料")
+                return
             name = next((p["name"] for p in players if p["rank"] == rank_num_int), f"名次 {rank_num_int}")
             # 固定取最近 11 筆樣本，若不足 11 筆就顯示現有資料
             history = list(self.rank_history[rank_num_int])[-11:]
@@ -290,12 +312,13 @@ class PJSKEvent(commands.Cog):
             embed = discord.Embed(
                 title=f"{name} 近十次增加pt",
                 color=discord.Color.from_rgb(int(0.945 * 255), int(0.906 * 255), int(0.486 * 255)),
+                description=f"當前分數：{score:,}"
             )
 
             if len(history) < 2:
                 latest = history[-1]
                 embed.add_field(
-                    name="最新樣本",
+                    name="當前紀錄",
                     value=f"分數：{latest['score']:,}\n時間：{latest['time']}\n可計算的分差不足 1 筆",
                     inline=False,
                 )
@@ -310,7 +333,7 @@ class PJSKEvent(commands.Cog):
                     embed.add_field(
                         name=f"{index}",
                         value=(
-                        f"{diff_text}"
+                        f"{diff_text}\n"
                         f"時間：{current_record['time']}\n"
                         ),
                         inline=False,
@@ -336,8 +359,24 @@ class PJSKEvent(commands.Cog):
                 self.current_event_close_time = parser.isoparse(data_close_time)
             except Exception:
                 self.current_event_close_time = None
+        #寫入.json檔案
+        try:
+            close_time_utc8 = self.current_event_close_time.astimezone(timezone(timedelta(hours=8))).strftime('%Y-%m-%d %H:%M:%S')
+            # 將結束時間寫入 event_rank_history.json
+            history_path = os.path.join(BOT_DIR, "event_rank_history.json")
+            if os.path.exists(history_path):
+                with open(history_path, "r", encoding="utf-8") as hf:
+                    j = json.load(hf)
+            else:
+                j = {}
+            j["close_time"] = close_time_utc8
+            with open(history_path, "w", encoding="utf-8") as hf:
+                json.dump(j, hf, ensure_ascii=False, indent=2)
+        except Exception:
+            pass
+        #清除所有排名原資料
+        self.rank_history.clear()
         # 重新載入本地儲存的結束時間，若 API 無法提供或已結束則使用本地資料
-        self._load_saved_close_time()
         await ctx.send(f"已重新載入活動結束時間: {self.current_event_close_time.strftime('%Y-%m-%d %H:%M:%S %Z')}")
 
 async def setup(bot):
